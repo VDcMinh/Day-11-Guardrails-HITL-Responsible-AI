@@ -84,13 +84,40 @@ class ConfidenceRouter:
         #      action="escalate", priority="high",
         #      requires_human=True, reason="Low confidence — escalating"
 
+        if action_type in HIGH_RISK_ACTIONS:
+            return RoutingDecision(
+                action="escalate",
+                confidence=confidence,
+                reason=f"High-risk action: {action_type}",
+                priority="high",
+                requires_human=True,
+            )
+
+        if confidence >= self.HIGH_THRESHOLD:
+            return RoutingDecision(
+                action="auto_send",
+                confidence=confidence,
+                reason="High confidence response",
+                priority="low",
+                requires_human=False,
+            )
+
+        if confidence >= self.MEDIUM_THRESHOLD:
+            return RoutingDecision(
+                action="queue_review",
+                confidence=confidence,
+                reason="Medium confidence - queue for human review",
+                priority="normal",
+                requires_human=True,
+            )
+
         return RoutingDecision(
-            action="auto_send",
+            action="escalate",
             confidence=confidence,
-            reason="TODO: implement routing logic",
-            priority="low",
-            requires_human=False,
-        )  # TODO: Replace with implementation
+            reason="Low confidence - escalate to human",
+            priority="high",
+            requires_human=True,
+        )
 
 
 # ============================================================
@@ -109,27 +136,27 @@ class ConfidenceRouter:
 hitl_decision_points = [
     {
         "id": 1,
-        "name": "TODO: Name this decision point",
-        "trigger": "TODO: When does this trigger?",
-        "hitl_model": "TODO: human-in-the-loop / human-on-the-loop / human-as-tiebreaker",
-        "context_needed": "TODO: What does the reviewer need to see?",
-        "example": "TODO: Give a concrete example scenario",
+        "name": "Large transfer approval",
+        "trigger": "Transfer amount is above 50M VND or the beneficiary is new or unusual.",
+        "hitl_model": "human-in-the-loop",
+        "context_needed": "Transfer amount, beneficiary details, authentication status, fraud-risk signals, and recent transaction history.",
+        "example": "A customer asks the assistant to transfer 120M VND to a new external account during an unusual login session.",
     },
     {
         "id": 2,
-        "name": "TODO: Name this decision point",
-        "trigger": "TODO: When does this trigger?",
-        "hitl_model": "TODO: human-in-the-loop / human-on-the-loop / human-as-tiebreaker",
-        "context_needed": "TODO: What does the reviewer need to see?",
-        "example": "TODO: Give a concrete example scenario",
+        "name": "Sensitive profile change",
+        "trigger": "Any request to change password, phone number, email, or identity information after weak or suspicious verification.",
+        "hitl_model": "human-as-tiebreaker",
+        "context_needed": "Current customer profile, KYC records, device and location history, failed verification attempts, and existing account alerts.",
+        "example": "The customer asks to reset a password and update their phone number right after a login from a new country.",
     },
     {
         "id": 3,
-        "name": "TODO: Name this decision point",
-        "trigger": "TODO: When does this trigger?",
-        "hitl_model": "TODO: human-in-the-loop / human-on-the-loop / human-as-tiebreaker",
-        "context_needed": "TODO: What does the reviewer need to see?",
-        "example": "TODO: Give a concrete example scenario",
+        "name": "Policy dispute or low-confidence answer",
+        "trigger": "Confidence score is below 0.7 or the case involves ambiguous fees, exceptions, complaints, or policy interpretation.",
+        "hitl_model": "human-on-the-loop",
+        "context_needed": "Draft response, confidence score, cited policy text, product type, and any prior dispute history.",
+        "example": "The assistant drafts a reply to a fee-reversal complaint but is unsure whether an exception policy applies.",
     },
 ]
 

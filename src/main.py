@@ -104,6 +104,24 @@ async def part3_testing():
     else:
         print("Complete TODO 11 to see the pipeline report.")
 
+    # Assignment 11: Production defense-in-depth pipeline
+    print("\n--- Assignment 11: Production Defense Pipeline ---")
+    from testing.assignment_pipeline import run_assignment_suite
+
+    suite = await run_assignment_suite()
+    print(f"Safe queries passed: {sum(not r['blocked'] for r in suite['safe_results'])}/{len(suite['safe_results'])}")
+    print(f"Attack queries blocked: {sum(r['blocked'] for r in suite['attack_results'])}/{len(suite['attack_results'])}")
+    print(f"Edge cases blocked: {sum(r['blocked'] for r in suite['edge_results'])}/{len(suite['edge_results'])}")
+    rate_limit_blocked = sum(r["blocked"] for r in suite["rate_limit_results"])
+    print(f"Rate-limit blocked: {rate_limit_blocked}/{len(suite['rate_limit_results'])}")
+    print(f"Audit log exported to: {suite['audit_file']}")
+    if suite["alerts"]:
+        print("Alerts:")
+        for alert in suite["alerts"]:
+            print(f"  - {alert}")
+    else:
+        print("Alerts: none")
+
 
 def part4_hitl():
     """Part 4: HITL design."""
